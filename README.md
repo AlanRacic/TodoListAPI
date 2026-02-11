@@ -1,44 +1,32 @@
-# TodoListAPI � RESTful ASP.NET Core Web API
+# TodoListAPI — RESTful ASP.NET Core Web API
 
-## Overview  
-TodoListAPI is a clean and minimal REST API for managing todo tasks using Entity Framework Core.  
-The project demonstrates proper API design, validation practices, async operations, and automatic Swagger/OpenAPI documentation.  
-It follows modern, maintainable patterns suitable for learning or extending into production-ready microservices.
+## Overview
+TodoListAPI is a clean, minimal task-management API built with **ASP.NET Core Web API** and **Entity Framework Core (Code-First)**.  
+It demonstrates predictable REST behavior, validation, async data access, and **Swagger** documentation—using patterns that scale well from learning projects to production-oriented services.
 
----
+## Tech Stack
+- **C# · .NET 10 · ASP.NET Core Web API**
+- **Entity Framework Core (Code-First) · Migrations**
+- **SQL Server**
+- **Swagger (API documentation and testing)**
+- **Dependency Injection**
 
-## Tech Stack  
-- ASP.NET Core Web API  
-- Entity Framework Core (Code-First)  
-- SQL Server  
-- Swagger / OpenAPI  
-- Dependency Injection  
+## Key Features
+- RESTful **CRUD endpoints** with consistent request/response behavior
+- **Code-First** domain models with **Entity Framework Core migrations**
+- Input validation with clear, structured error responses
+- **Async/await** for database operations
+- Interactive API documentation via **Swagger**
+- Repository and service layers for maintainable data access and business logic separation
 
----
+## Architecture & Concepts
+- Layered structure with controllers, services, and repositories
+- Dependency Injection for clean wiring and test-friendly design
+- Entity Framework Core Code-First workflow (models → migrations → database)
+- REST conventions with meaningful HTTP status codes and predictable payloads
 
-## Key Features  
-- CRUD endpoints following REST conventions  
-- Code-First EF Core modeling + migrations  
-- Validation and structured error handling  
-- Async/await for all database operations  
-- Automatic Swagger/OpenAPI API documentation  
-- Repository & service architecture for clean maintainability  
+## Skills Demonstrated
+ASP.NET Core Web API · C# · .NET 10 · Entity Framework Core · SQL Server · REST APIs · Async/Await · Validation · Swagger · Dependency Injection · Migrations
 
----
-
-## Architecture & Concepts  
-- Clean REST API structure following best practices  
-- Code-First domain modeling with EF Core  
-- Dependency Injection for repositories and services  
-- Layered architecture with clear separation of concerns  
-- Consistent and meaningful HTTP response patterns  
-
----
-
-## Skills Demonstrated  
-ASP.NET Core Web API � EF Core � Async Programming � Swagger/OpenAPI � REST Architecture � Dependency Injection � Code-First Migrations
-
----
-
-## Project Status  
-Lightweight, maintainable API designed for demonstrating professional REST API patterns and clean architecture fundamentals.
+## Project Status
+Maintained as a lightweight reference implementation of clean REST API structure and practical backend patterns.
