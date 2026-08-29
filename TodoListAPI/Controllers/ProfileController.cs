@@ -21,45 +21,113 @@ namespace TodoListAPI.Controllers
 
         public async Task<IActionResult> Index()
         {
-            var user = await _userManager.GetUserAsync(User);
+            var userId = _userManager.GetUserId(User);
+
+            if (userId == null)
+            {
+                return Challenge();
+            }
+
             var lists = await _context.TodoLists
-                .Include(t => t.Tasks)
-                .Where(t => t.UserId == user.Id)
+                .Where(list => list.UserId == userId)
+                .Include(list => list.Tasks)
+                .AsNoTracking()
                 .ToListAsync();
 
             return View(lists);
         }
 
         [HttpPost]
+        [ValidateAntiForgeryToken]
         public async Task<IActionResult> CreateList(string title)
         {
-            var user = await _userManager.GetUserAsync(User);
-            var list = new TodoList { Title = title, UserId = user.Id };
+            if (string.IsNullOrWhiteSpace(title))
+            {
+                return RedirectToAction(nameof(Index));
+            }
+
+            var userId = _userManager.GetUserId(User);
+
+            if (userId == null)
+            {
+                return Challenge();
+            }
+
+            var list = new TodoList
+            {
+                Title = title.Trim(),
+                UserId = userId
+            };
+
             _context.TodoLists.Add(list);
             await _context.SaveChangesAsync();
-            return RedirectToAction("Index");
+
+            return RedirectToAction(nameof(Index));
         }
 
         [HttpPost]
+        [ValidateAntiForgeryToken]
         public async Task<IActionResult> AddTask(int listId, string taskTitle)
         {
-            var task = new TodoTask { Title = taskTitle, TodoListId = listId };
+            if (string.IsNullOrWhiteSpace(taskTitle))
+            {
+                return RedirectToAction(nameof(Index));
+            }
+
+            var userId = _userManager.GetUserId(User);
+
+            if (userId == null)
+            {
+                return Challenge();
+            }
+
+            var listExists = await _context.TodoLists.AnyAsync(list =>
+                    list.TodoListId == listId &&
+                    list.UserId == userId);
+
+            if (!listExists)
+            {
+                return NotFound();
+            }
+
+            var task = new TodoTask
+            {
+                Title = taskTitle.Trim(),
+                TodoListId = listId
+            };
+
             _context.TodoTasks.Add(task);
             await _context.SaveChangesAsync();
-            return RedirectToAction("Index");
+
+            return RedirectToAction(nameof(Index));
         }
 
         [HttpPost]
+        [ValidateAntiForgeryToken]
         public async Task<IActionResult> MarkDone(int taskId)
         {
-            var task = await _context.TodoTasks.FindAsync(taskId);
-            if (task != null)
+            var userId = _userManager.GetUserId(User);
+
+            if (userId == null)
             {
-                task.Status = true;
-                await _context.SaveChangesAsync();
+                return Challenge();
             }
-            return RedirectToAction("Index");
+
+            var task = await _context.TodoTasks
+                .Include(task => task.TodoList)
+                .FirstOrDefaultAsync(task =>
+                    task.TodoTaskId == taskId &&
+                    task.TodoList.UserId == userId);
+
+            if (task == null)
+            {
+                return NotFound();
+            }
+
+            task.Status = true;
+            await _context.SaveChangesAsync();
+
+            return RedirectToAction(nameof(Index));
         }
     }
 }
-

@@ -2,6 +2,7 @@
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using TodoListAPI.Contracts;
 using TodoListAPI.Data;
 using TodoListAPI.Models;
 
@@ -25,11 +26,25 @@ namespace TodoListAPI.Controllers.Api
         [HttpGet("todolists")]
         public async Task<IActionResult> GetLists()
         {
-            var user = await _userManager.GetUserAsync(User);
+            var userId = _userManager.GetUserId(User);
+
+            if (userId == null)
+            {
+                return Unauthorized();
+            }
 
             var lists = await _context.TodoLists
-                .Include(l => l.Tasks)
-                .Where(l => l.UserId == user!.Id)
+                .AsNoTracking()
+                .Where(list => list.UserId == userId)
+                .Select(list => new TodoListResponse(
+                    list.TodoListId,
+                    list.Title,
+                    list.Tasks
+                        .Select(task => new TodoTaskResponse(
+                            task.TodoTaskId,
+                            task.Title,
+                            task.Status))
+                        .ToList()))
                 .ToListAsync();
 
             return Ok(lists);
@@ -37,23 +52,38 @@ namespace TodoListAPI.Controllers.Api
 
         // POST /api/todolists
         [HttpPost("todolists")]
-        public async Task<IActionResult> CreateList([FromBody] CreateListRequest request)
+        public async Task<IActionResult> CreateList(
+            [FromBody] CreateListRequest request)
         {
             if (string.IsNullOrWhiteSpace(request.Title))
+            {
                 return BadRequest("Title is required.");
+            }
 
-            var user = await _userManager.GetUserAsync(User);
+            var userId = _userManager.GetUserId(User);
+
+            if (userId == null)
+            {
+                return Unauthorized();
+            }
 
             var list = new TodoList
             {
                 Title = request.Title.Trim(),
-                UserId = user!.Id
+                UserId = userId
             };
 
             _context.TodoLists.Add(list);
             await _context.SaveChangesAsync();
 
-            return CreatedAtAction(nameof(GetLists), new { id = list.TodoListId }, list);
+            var response = new TodoListResponse(
+                list.TodoListId,
+                list.Title,
+                Array.Empty<TodoTaskResponse>());
+
+            return CreatedAtAction(
+                nameof(GetLists),
+                response);
         }
 
         // POST /api/todolists/{listId}/tasks
@@ -61,16 +91,25 @@ namespace TodoListAPI.Controllers.Api
         public async Task<IActionResult> AddTask(int listId, [FromBody] AddTaskRequest request)
         {
             if (string.IsNullOrWhiteSpace(request.Title))
+            {
                 return BadRequest("Task title is required.");
+            }
 
-            var user = await _userManager.GetUserAsync(User);
+            var userId = _userManager.GetUserId(User);
 
-            // List belongs to the logged-in user
-            var list = await _context.TodoLists
-                .FirstOrDefaultAsync(l => l.TodoListId == listId && l.UserId == user!.Id);
+            if (userId == null)
+            {
+                return Unauthorized();
+            }
 
-            if (list == null)
+            var listExists = await _context.TodoLists.AnyAsync(list =>
+                    list.TodoListId == listId &&
+                    list.UserId == userId);
+
+            if (!listExists)
+            {
                 return NotFound("List not found.");
+            }
 
             var task = new TodoTask
             {
@@ -81,22 +120,35 @@ namespace TodoListAPI.Controllers.Api
             _context.TodoTasks.Add(task);
             await _context.SaveChangesAsync();
 
-            return Ok(task);
+            var response = new TodoTaskResponse(
+                task.TodoTaskId,
+                task.Title,
+                task.Status);
+
+            return Ok(response);
         }
 
         // PUT /api/todotasks/{taskId}/done
         [HttpPut("todotasks/{taskId:int}/done")]
         public async Task<IActionResult> MarkDone(int taskId)
         {
-            var user = await _userManager.GetUserAsync(User);
+            var userId = _userManager.GetUserId(User);
 
-            // Task belongs to a list owned by the logged-in user
+            if (userId == null)
+            {
+                return Unauthorized();
+            }
+
             var task = await _context.TodoTasks
-                .Include(t => t.TodoList)
-                .FirstOrDefaultAsync(t => t.TodoTaskId == taskId && t.TodoList.UserId == user!.Id);
+                .Include(task => task.TodoList)
+                .FirstOrDefaultAsync(task =>
+                    task.TodoTaskId == taskId &&
+                    task.TodoList.UserId == userId);
 
             if (task == null)
+            {
                 return NotFound("Task not found.");
+            }
 
             task.Status = true;
             await _context.SaveChangesAsync();
@@ -104,8 +156,4 @@ namespace TodoListAPI.Controllers.Api
             return NoContent();
         }
     }
-
-    // Simple request DTOs
-    public record CreateListRequest(string Title);
-    public record AddTaskRequest(string Title);
 }

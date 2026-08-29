@@ -9,14 +9,13 @@ namespace TodoListAPI.Models
         public int TodoTaskId { get; set; }
 
         [Required]
-        public string Title { get; set; }
+        public string Title { get; set; } = string.Empty;
 
-        public bool Status { get; set; } = false;
+        public bool Status { get; set; }
 
         public int TodoListId { get; set; }
 
-        [ForeignKey("TodoListId")]
-        public TodoList TodoList { get; set; }
+        [ForeignKey(nameof(TodoListId))]
+        public TodoList TodoList { get; set; } = null!;
     }
 }
-

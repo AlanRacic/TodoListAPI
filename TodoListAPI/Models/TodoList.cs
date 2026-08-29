@@ -1,6 +1,6 @@
-﻿using System.ComponentModel.DataAnnotations;
+﻿using Microsoft.AspNetCore.Identity;
+using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
-using Microsoft.AspNetCore.Identity;
 
 namespace TodoListAPI.Models
 {
@@ -10,14 +10,14 @@ namespace TodoListAPI.Models
         public int TodoListId { get; set; }
 
         [Required]
-        public string Title { get; set; }
+        public string Title { get; set; } = string.Empty;
 
-        public string UserId { get; set; }
+        public string UserId { get; set; } = string.Empty;
 
-        [ForeignKey("UserId")]
-        public IdentityUser User { get; set; }
+        [ForeignKey(nameof(UserId))]
+        public IdentityUser User { get; set; } = null!;
 
         public ICollection<TodoTask> Tasks { get; set; }
+            = new List<TodoTask>();
     }
 }
-
