@@ -45,20 +45,6 @@ ASP.NET Core Identity manages account registration, login, logout, and authentic
 
 Todo lists are associated with an Identity user through `UserId`.
 
-```text
-IdentityUser
-     │
-     │ 1
-     │
-     └──────── *
-              TodoList
-                  │
-                  │ 1
-                  │
-                  └──────── *
-                           TodoTask
-```
-
 Before accessing or modifying user-owned resources, the application resolves the current user through `UserManager<IdentityUser>` and constrains database operations by that user's identifier.
 
 For operations involving an existing list or task, ownership is verified before the modification is allowed.
@@ -133,19 +119,9 @@ A user therefore cannot add tasks to another user's list simply by supplying a d
 
 The REST API uses dedicated request and response contracts instead of exposing EF Core entities directly.
 
-Request contracts include:
+Request contracts include `CreateListRequest` and `AddTaskRequest`.
 
-```text
-CreateListRequest
-AddTaskRequest
-```
-
-Response contracts include:
-
-```text
-TodoListResponse
-TodoTaskResponse
-```
+Response contracts include `TodoListResponse` and `TodoTaskResponse`.
 
 The API projects database data into these response models before serialization.
 
@@ -169,25 +145,11 @@ The application uses two todo entities in addition to the ASP.NET Core Identity 
 
 ### TodoList
 
-Represents a collection owned by an authenticated user.
-
-```text
-TodoListId
-Title
-UserId
-Tasks
-```
+Represents a collection owned by an authenticated user and contains `TodoListId`, `Title`, `UserId`, and its related `Tasks`.
 
 ### TodoTask
 
-Represents an individual task belonging to a todo list.
-
-```text
-TodoTaskId
-Title
-Status
-TodoListId
-```
+Represents an individual task belonging to a todo list, with `TodoTaskId`, `Title`, `Status`, and `TodoListId`.
 
 The resulting relationship is:
 
@@ -228,15 +190,13 @@ EF Core migrations
 SQL Server schema
 ```
 
-This complements the Database-First approach used in the InvoiceManagementMVC project by demonstrating the opposite EF Core workflow: application models define the schema and migrations evolve it.
+In this Code-First workflow, the application models define the database structure while migrations capture and apply schema evolution over time.
 
 ---
 
 ## Configuration
 
-The SQL Server connection is configured through:
-
-`ConnectionStrings:TodoConnection`
+The SQL Server connection is configured through `ConnectionStrings:TodoConnection`.
 
 The application validates that the connection string exists during startup before registering `ApplicationDbContext`.
 
